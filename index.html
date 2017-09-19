@@ -1,0 +1,295 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+  	<head>
+  		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  		<title>Test RL</title>
+  	</head>
+
+  	<body>
+		<h1 style="text-align:center;">Test Reinforcement Learning</h1>
+		<canvas id="game_canvas" style="border:1px solid black; margin:auto; display: block;" width="640" height="640"> </canvas>
+		
+		<script type="text/javascript">
+
+			var c = document.getElementById("game_canvas");
+			var canvas = c.getContext("2d");
+			
+			var agent = {
+				hasBall: 0,
+				x_init: 0,
+				y_init: 0,
+				x: 0,
+				y: 0,
+				draw: function() {
+					canvas.fillStyle = "#00A";
+					canvas.fillRect(this.y * 80 + 20, this.x * 80 + 20, 40, 40);
+				},
+				reset: function() {
+					this.x = this.x_init;
+					this.y = this.y_init;
+					this.hasBall = 0;
+				}
+			}
+			
+			var ball = {
+				x: 0,
+				y: 0
+			}
+			
+			function getRandom(min, max) {
+				return Math.trunc(Math.random() * (max - min) + min);
+			}
+
+			function generateGrid() {
+				var used_random = []
+				var grid = new Array(8);
+				for (var i = 0; i < 8; i++)
+				{
+					grid[i] = new Array(8);
+					for (var j = 0; j < 8; j++) {
+						grid[i][j] = 0;
+					}
+				}
+				
+				ball_position = getRandom(0, 63);
+				grid[Math.trunc(ball_position / 8)][ball_position % 8] = 1;
+				used_random.push(ball_position);
+				ball.y = Math.trunc(ball_position / 8);
+				ball.x = ball_position % 8;
+				
+				do {
+					basket_position = getRandom(0, 63);
+				}
+				while (used_random.includes(basket_position));
+				grid[Math.trunc(basket_position / 8)][basket_position % 8] = 2;
+				used_random.push(basket_position);
+				
+				do {
+					hole_position = getRandom(0, 63);
+				}
+				while (used_random.includes(hole_position));
+				grid[Math.trunc(hole_position / 8)][hole_position % 8] = -1;
+				used_random.push(hole_position);
+				
+				do {
+					player_position = getRandom(0, 63);
+				}
+				while (used_random.includes(player_position));
+				agent.x_init = player_position % 8;
+				agent.x = player_position % 8;
+				agent.y_init = Math.trunc(player_position / 8);
+				agent.y = Math.trunc(player_position / 8);
+				used_random.push(player_position);
+				return grid;
+			}
+			
+			function drawGrid(grid) {
+				canvas.beginPath();
+				for (var x = 0; x <= 640; x += 80)
+				{
+					canvas.moveTo(x, 0);
+					canvas.lineTo(x, 640);
+				}
+				
+				for (var x = 0; x <= 640; x += 80)
+				{
+					canvas.moveTo(0, x);
+					canvas.lineTo(640, x);
+				}
+				
+				canvas.strokeStype = "black";
+				canvas.stroke();
+				canvas.closePath();
+				
+				for (var i = 0; i < 8; i++) {
+					for (var j = 0; j < 8; j++) {
+						switch (grid[i][j]) {
+							case -1:
+								canvas.fillStyle = "#000";
+								canvas.fillRect(i * 80, j * 80, 80, 80);
+								break;
+							case 1:
+								canvas.beginPath();
+								canvas.fillStyle = "#FF4";
+								canvas.arc(i * 80 + 40, j * 80 + 40, 20, 0, 2 * Math.PI);
+								canvas.fill();
+								canvas.stroke();
+								canvas.closePath();
+								break;
+							case 2:
+								canvas.beginPath();
+								canvas.fillStyle = "#00cd00";
+								canvas.arc(i * 80 + 40, j * 80 + 40, 30, 0, 2 * Math.PI);
+								canvas.fill();
+								canvas.stroke();
+								canvas.closePath();
+								break;
+							default:
+						}
+					}
+				}
+			}
+			
+			function initQValues() {
+				qValues = new Array(2);
+				for (var i = 0; i < 2; i++)
+				{
+					qValues[i] = new Array(8);
+					for (var j = 0; j < 8; j++)
+					{
+						qValues[i][j] = new Array(8);
+						for (var k = 0; k < 8; k++) {
+							qValues[i][j][k] = new Array(4);
+							for (var l = 0; l < 4; l++) {
+								qValues[i][j][k][l] = 0;
+							}
+						}
+					}
+				}
+				return qValues;
+			}
+			// TODO revoir la façon de gérer l'agent, créer un objet et tout le tintouin
+			function step(grid, action) {
+				var reward = -1;
+				var finished = false;
+				switch (action)
+				{
+					case 0:
+						if (agent.y > 0) {
+							if (agent.hasBall == 0 && grid[agent.y - 1][agent.x] == 1) {
+								agent.hasBall = 1;
+								grid[agent.y - 1][agent.x] = 0;
+							}
+							else if (grid[agent.y - 1][agent.x] == -1)
+							{
+								reward -= 100;
+								finished = true;
+							}
+							else if (grid[agent.y - 1][agent.x] == 2 && agent.hasBall == 1)
+							{
+								reward += 100;
+								finished = true;
+							}
+							agent.y -= 1;
+						}
+						break;
+					case 1:
+						if (agent.x < 7) {
+							if (agent.hasBall == 0 && grid[agent.y][agent.x + 1] == 1) {
+								agent.hasBall = 1;
+								grid[agent.y][agent.x + 1] = 0;
+							}
+							else if (grid[agent.y][agent.x + 1] == -1)
+							{
+								reward -= 100;
+								finished = true;
+							}
+							else if (grid[agent.y][agent.x + 1] == 2 && agent.hasBall == 1)
+							{
+								reward += 100;
+								finished = true;
+							}
+							agent.x += 1;
+						}
+						break;
+					case 2:
+						if (agent.y < 7) {
+							if (agent.hasBall == 0 && grid[agent.y + 1][agent.x] == 1) {
+								agent.hasBall = 1;
+								grid[agent.y + 1][agent.x] = 0;
+							}
+							else if (grid[agent.y + 1][agent.x] == -1)
+							{
+								reward -= 100;
+								finished = true;
+							}
+							else if (grid[agent.y + 1][agent.x] == 2 && agent.hasBall == 1)
+							{
+								reward += 100;
+								finished = true;
+							}
+							
+							agent.y += 1;
+						}
+						break;
+					case 3:
+						if (agent.x > 0) {
+							if (agent.hasBall == 0 && grid[agent.y][agent.x - 1] == 1) {
+								agent.hasBall = 1;
+								grid[agent.y][agent.x - 1] = 0;
+							}
+							else if (grid[agent.y][agent.x - 1] == -1)
+							{
+								reward -= 100;
+								finished = true;
+							}
+							else if (grid[agent.y][agent.x - 1] == 2 && agent.hasBall == 1)
+							{
+								reward += 100;
+								finished = true;
+							}
+							agent.x -= 1;
+						}
+						break;
+				}
+				return {reward: reward, finished: finished};
+			}
+			
+			function getMaxQValue(hasBall, x, y)
+			{
+				var maxDir = 0;
+				var maxQValue = q_values[hasBall][y][x][0];
+				
+				for (var k = 1; k < 4; k++) {
+					if (q_values[hasBall][y][x][k] > maxQValue) {
+						maxQValue = q_values[hasBall][y][x][k];
+						maxDir = k;
+					}
+				}
+				return {maxDir: maxDir, maxQValue: maxQValue};
+			}
+			
+			var q_values = initQValues();
+			var grid = generateGrid();
+			
+			var finished = false;
+			
+			function update() {
+				if (finished == false)
+				{
+					max_q_value_result = getMaxQValue(agent.hasBall, agent.x, agent.y);
+					var action = max_q_value_result.maxDir; // 0 = UP, 1 = RIGHT, 2 = DOWN, 3 = LEFT
+					
+					var old_x = agent.x;
+					var old_y = agent.y;
+					var old_hasBall = agent.hasBall;
+					var result = step(grid, action);
+					var reward = result.reward;
+					q_values[old_hasBall][old_y][old_x][action] = reward + getMaxQValue(agent.hasBall, agent.x, agent.y).maxQValue;
+					finished = result.finished;
+				}
+				else {
+					agent.reset();
+					grid[ball.y][ball.x] = 1;
+					finished = false;
+				}
+			}
+			
+			function draw() {
+				canvas.clearRect(0, 0, 640, 640);
+				drawGrid(grid);
+				agent.draw();
+			}
+			
+			function frame() {
+				update();
+				draw();
+				requestAnimationFrame(frame);
+			}
+
+			frame();
+		</script>
+		
+	</body>
+</html>
+
