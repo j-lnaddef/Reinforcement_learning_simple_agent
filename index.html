@@ -84,22 +84,7 @@
 			}
 			
 			function drawGrid(grid) {
-				canvas.beginPath();
-				for (var x = 0; x <= 640; x += 80)
-				{
-					canvas.moveTo(x, 0);
-					canvas.lineTo(x, 640);
-				}
 				
-				for (var x = 0; x <= 640; x += 80)
-				{
-					canvas.moveTo(0, x);
-					canvas.lineTo(640, x);
-				}
-				
-				canvas.strokeStype = "black";
-				canvas.stroke();
-				canvas.closePath();
 				
 				for (var i = 0; i < 8; i++) {
 					for (var j = 0; j < 8; j++) {
@@ -125,9 +110,112 @@
 								canvas.closePath();
 								break;
 							default:
+								canvas.beginPath();
+								canvas.moveTo(i * 80, j * 80);
+								canvas.lineTo(i * 80 + 40, j * 80 + 40);
+								canvas.lineTo((i + 1) * 80, j *80);
+								if (q_values[agent.hasBall][i][j][3] > 0) {
+									canvas.fillStyle = "#7CFC00";
+								}
+								else if (q_values[agent.hasBall][i][j][3] < 0)
+								{
+									canvas.fillStyle = "#FF9999";
+								}
+								else
+								{
+									canvas.fillStyle = "#FFFFFF";
+								}
+								canvas.fill();
+								canvas.stroke();
+								canvas.closePath();
+								canvas.fillStyle = "black";
+								canvas.font = "15px Arial";
+								canvas.fillText(q_values[agent.hasBall][i][j][3].toString(), i * 80 + 35, j * 80 + 20);
+								
+								canvas.beginPath();
+								canvas.moveTo(i * 80, j * 80);
+								canvas.lineTo(i * 80 + 40, j * 80 + 40);
+								canvas.lineTo(i * 80, (j + 1) *80);
+								if (q_values[agent.hasBall][i][j][0] > 0) {
+									canvas.fillStyle = "#7CFC00";
+								}
+								else if (q_values[agent.hasBall][i][j][0] < 0)
+								{
+									canvas.fillStyle = "#FF9999";
+								}
+								else
+								{
+									canvas.fillStyle = "#FFFFFF";
+								}
+								canvas.fill();
+								canvas.stroke();
+								canvas.closePath();
+								canvas.fillStyle = "black";
+								canvas.font = "15px Arial";
+								canvas.fillText(q_values[agent.hasBall][i][j][0].toString(), i * 80 + 10, j * 80 + 45);
+								
+								canvas.beginPath();
+								canvas.moveTo((i + 1) * 80, j * 80);
+								canvas.lineTo(i * 80 + 40, j * 80 + 40);
+								canvas.lineTo((i + 1) * 80, (j + 1) *80);
+								if (q_values[agent.hasBall][i][j][2] > 0) {
+									canvas.fillStyle = "#7CFC00";
+								}
+								else if (q_values[agent.hasBall][i][j][2] < 0)
+								{
+									canvas.fillStyle = "#FF9999";
+								}
+								else
+								{
+									canvas.fillStyle = "#FFFFFF";
+								}
+								canvas.fill();
+								canvas.stroke();
+								canvas.closePath();
+								canvas.fillStyle = "black";
+								canvas.font = "15px Arial";
+								canvas.fillText(q_values[agent.hasBall][i][j][2].toString(), i * 80 + 60, j * 80 + 45);
+								
+								canvas.beginPath();
+								canvas.moveTo(i * 80, (j + 1) * 80);
+								canvas.lineTo(i * 80 + 40, j * 80 + 40);
+								canvas.lineTo((i + 1) * 80, (j + 1) *80);
+								if (q_values[agent.hasBall][i][j][1] > 0) {
+									canvas.fillStyle = "#7CFC00";
+								}
+								else if (q_values[agent.hasBall][i][j][1] < 0)
+								{
+									canvas.fillStyle = "#FF9999";
+								}
+								else
+								{
+									canvas.fillStyle = "#FFFFFF";
+								}
+								canvas.fill();
+								canvas.stroke();
+								canvas.closePath();
+								canvas.fillStyle = "black";
+								canvas.font = "15px Arial";
+								canvas.fillText(q_values[agent.hasBall][i][j][1].toString(), i * 80 + 35, j * 80 + 70);
 						}
 					}
 				}
+				canvas.beginPath();
+				for (var x = 0; x <= 640; x += 80)
+				{
+					canvas.moveTo(x, 0);
+					canvas.lineTo(x, 640);
+				}
+				
+				for (var x = 0; x <= 640; x += 80)
+				{
+					canvas.moveTo(0, x);
+					canvas.lineTo(640, x);
+				}
+				
+				canvas.strokeStype = "black";
+				canvas.stroke();
+				canvas.closePath();
 			}
 			
 			function initQValues() {
@@ -280,10 +368,13 @@
 				drawGrid(grid);
 				agent.draw();
 			}
-			
+			var i = -1;
 			function frame() {
-				update();
-				draw();
+				i++;
+				if (i % 10 == 0) {
+					update();
+					draw();
+				}
 				requestAnimationFrame(frame);
 			}
 
