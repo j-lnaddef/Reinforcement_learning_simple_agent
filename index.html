@@ -325,10 +325,10 @@
 			
 			function getMaxQValue(hasBall, x, y)
 			{
-				var maxDir = 0;
-				var maxQValue = q_values[hasBall][y][x][0];
+				var maxDir = getRandom(0, 3);
+				var maxQValue = q_values[hasBall][y][x][maxDir];
 				
-				for (var k = 1; k < 4; k++) {
+				for (var k = 0; k < 4; k++) {
 					if (q_values[hasBall][y][x][k] > maxQValue) {
 						maxQValue = q_values[hasBall][y][x][k];
 						maxDir = k;
